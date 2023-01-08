@@ -9,7 +9,7 @@ mvn clean package
 To run app by command.
 
 ```
-spring spring-boot:run
+SERVER_PORT=9080 mvn spring-boot:run
 ```
 
 To generate a docker image.
@@ -34,4 +34,10 @@ To find a user
 
 ```
 curl -v localhost:9080/v1/api/users/1
+```
+
+To find a building that belongs for a user
+
+```
+curl -v localhost:9080/v1/api/users/1/buildings/1
 ```

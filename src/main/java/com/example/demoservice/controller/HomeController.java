@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v1/api/users")
-@Transactional
+@Transactional(readOnly = true)
 public class HomeController {
     private final UserRepository userRepository;
 
@@ -34,6 +34,7 @@ public class HomeController {
         this.elevatorRepository = elevatorRepository;
     }
 
+    @Transactional
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<User> addUser(@Valid @RequestBody User user) {
         user = userRepository.save(user);
@@ -43,10 +44,14 @@ public class HomeController {
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<User> findByUserId(@PathVariable Integer id) {
         return userRepository.findById(id)
-                .map(ResponseEntity::ok)
+                .map(u -> {
+                    u.setBuildings(null);
+                    return ResponseEntity.ok(u);
+                })
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found user id: "+id));
     }
 
+    @Transactional
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<User> updateUser(@PathVariable Integer id, @Valid @RequestBody User user) {
         return userRepository.findById(id)
@@ -60,7 +65,10 @@ public class HomeController {
         return user.get().getBuildings().stream()
                 .filter(b -> b.getId().equals(buildingId))
                 .findFirst()
-                .map(ResponseEntity::ok)
+                .map(b -> {
+                    b.setElevators(null);
+                    return ResponseEntity.ok(b);
+                })
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found building id: "+buildingId));
     }
 
@@ -75,6 +83,7 @@ public class HomeController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found building id: "+buildingId));
     }
 
+    @Transactional
     @PostMapping(value = "/{id}/buildings/{buildingId}/elevators/{elevatorId}/summon", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> summonElevator(@PathVariable Integer id, @PathVariable Integer buildingId,
                                                      @PathVariable Integer elevatorId,
@@ -85,6 +94,7 @@ public class HomeController {
         return ResponseEntity.ok(Collections.singletonMap("msg", "Updated elevator status"));
     }
 
+    @Transactional
     @PostMapping(value = "/{id}/buildings/{buildingId}/elevators/{elevatorId}/selectFloor", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> floorElevator(@PathVariable Integer id, @PathVariable Integer buildingId,
                                                 @PathVariable Integer elevatorId,

@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.jpa.hibernate.ddl-auto=create-drop")
 @AutoConfigureMockMvc
 class DemoServiceApplicationTests {
     @Autowired
@@ -83,6 +83,14 @@ class DemoServiceApplicationTests {
         mockMvc.perform(get("/v1/api/users/"+userResponse.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(userResponse.getName()));
+
+        mockMvc.perform(get(String.format("/v1/api/users/%s/buildings/%s", userResponse.getId(), next.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(next.getId()))
+                .andExpect(jsonPath("$.name").value(next.getName()));
+
+        mockMvc.perform(get(String.format("/v1/api/users/%s/buildings/%s", userResponse.getId(), next.getId() + 1)))
+                .andExpect(status().isNotFound());
 
         mockMvc.perform(get(String.format("/v1/api/users/%s/buildings/%s/elevators/statuses", userResponse.getId(), next.getId())))
                 .andExpect(status().isOk())
@@ -150,7 +158,7 @@ class DemoServiceApplicationTests {
 
         mockMvc.perform(post(String.format("/v1/api/users/%s/buildings/%s/elevators/%s/selectFloor", userResponse.getId(), next.getId(), elevator1.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"floor\":\"4\"}"))
+                        .content("{\"floor\":\"6\"}"))
                 .andExpect(status().isBadRequest());
     }
 
